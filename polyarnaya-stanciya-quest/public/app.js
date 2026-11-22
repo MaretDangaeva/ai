@@ -6,7 +6,7 @@ const STAGES=[{id:'signal',icon:'📡',label:'Радиомаяк'},{id:'train',i
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const roomFromUrl=()=>new URLSearchParams(location.search).get('room')?.toUpperCase()||'';
 const shareLink=code=>location.origin+location.pathname+'?room='+encodeURIComponent(code);
-let room=roomFromUrl(),token='',snapshot=null,publicSnapshot=null,stream=null,selectedRole='',nickname='',loading=false,toastTimer=null,connection='';
+let room=roomFromUrl(),token='',snapshot=null,publicSnapshot=null,stream=null,selectedRole='',nickname='',loading=false,toastTimer=null,connection='',reconnectTimer=null;
 function notification(text){toastEl.textContent=text;toastEl.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.classList.remove('show'),3500);}
 async function fetchJson(path,options={}){
   const r=await fetch(path,{...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});
@@ -16,10 +16,13 @@ async function fetchJson(path,options={}){
 const post=(path,body={})=>fetchJson(path,{method:'POST',body:JSON.stringify(body)});
 function roomURL(code){history.replaceState(null,'',location.pathname+'?room='+code);room=code;}
 function keyFor(code){return 'polar-station-2027:'+code;}
+function hostKeyFor(code){return 'polar-station-2027:host:'+code;}
 function persist(code,t){sessionStorage.setItem(keyFor(code),t);}
-function dismissSession(){if(room)sessionStorage.removeItem(keyFor(room));token='';snapshot=null;stream?.close();stream=null;}
+function rememberHost(code,t){localStorage.setItem(hostKeyFor(code),t);}
+function isHostSession(code,t){return !!t&&localStorage.getItem(hostKeyFor(code))===t;}
+function dismissSession(){if(room)sessionStorage.removeItem(keyFor(room));token='';snapshot=null;stream?.close();stream=null;clearTimeout(reconnectTimer);reconnectTimer=null;}
 function header(){return `<div class="topbar"><div class="brand"><div class="brand-icon">✳</div><div>ПОЛЯРНАЯ СТАНЦИЯ<div class="brand-sub">КОМАНДНАЯ МИССИЯ • 2027</div></div></div><div class="top-actions">${room?`<span class="room-pill">КОМНАТА ${esc(room)}</span>`:''}<span id="connection" class="tiny-pill"><span class="live-dot"></span>${esc(connection||'Идёт подключение')}</span></div></div>`;}
-function landing(){return `${header()}<section class="hero-grid"><div><p class="eyebrow">Совместный квест • 1–4 класс • 2–10 игроков</p><h1 class="hero-title">Северное сияние <span class="gradient-text">исчезло!</span></h1><p class="lead">В полярной станции случился сбой. Только команда маленьких экспертов по искусственному интеллекту сможет вернуть праздник. У каждого — своя роль, секрет и кнопки управления.</p><div class="cta-row"><button class="btn primary huge" data-action="create">🚀 Создать комнату</button></div><div class="hero-note"><span class="feature-chip">🔗 Одна ссылка для всей группы</span><span class="feature-chip">📱 У каждого свой пульт</span><span class="feature-chip">🤝 Победа только вместе</span></div></div><div class="hero-art" aria-hidden="true"><div class="art-orbit"></div><div class="art-orbit second"></div><span class="art-moon">🌙</span><span class="art-spark s1">✦</span><span class="art-spark s2">✳</span><span class="art-spark s3">✧</span><div class="art-bot">🤖</div><div class="art-card left">📡 СИГНАЛ: 0%</div><div class="art-card right">⚡ ЗАРЯД: НУЖЕН</div><div class="art-base"></div></div></section><div class="mission-steps">${STAGES.map(s=>`<div class="mission-step"><strong>${s.icon}</strong>${s.label}</div>`).join('')}</div><p class="footer-note">Для ведущего: создайте комнату и отправьте одну ссылку детям. Игра синхронизируется между устройствами в реальном времени.</p>`;}
+function landing(){return `${header()}<section class="hero-grid"><div><p class="eyebrow">Совместный квест • 1–4 класс • 2–10 игроков</p><h1 class="hero-title">Северное сияние <span class="gradient-text">исчезло!</span></h1><p class="lead">В полярной станции случился сбой. Только команда маленьких экспертов по искусственному интеллекту сможет вернуть праздник. У каждого — своя роль, секрет и кнопки управления.</p><div class="cta-row"><button class="btn primary huge" data-action="create">🚀 Создать комнату</button><div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center"><input class="field" id="room-code" maxlength="5" placeholder="Код из 5 знаков" aria-label="Код комнаты" style="max-width:175px;text-transform:uppercase"><button class="btn outline" data-action="enter-room">Войти по коду →</button></div></div><div class="hero-note"><span class="feature-chip">🔗 Одна ссылка для всей группы</span><span class="feature-chip">📱 У каждого свой пульт</span><span class="feature-chip">🤝 Победа только вместе</span></div></div><div class="hero-art" aria-hidden="true"><div class="art-orbit"></div><div class="art-orbit second"></div><span class="art-moon">🌙</span><span class="art-spark s1">✦</span><span class="art-spark s2">✳</span><span class="art-spark s3">✧</span><div class="art-bot">🤖</div><div class="art-card left">📡 СИГНАЛ: 0%</div><div class="art-card right">⚡ ЗАРЯД: НУЖЕН</div><div class="art-base"></div></div></section><div class="mission-steps">${STAGES.map(s=>`<div class="mission-step"><strong>${s.icon}</strong>${s.label}</div>`).join('')}</div><p class="footer-note">Для ведущего: создайте комнату и отправьте одну ссылку детям. Игра синхронизируется между устройствами в реальном времени.</p>`;}
 function joinScreen(){
   const r=publicSnapshot;
   if(!r)return `${header()}<div class="glass panel"><h2>Ищем комнату…</h2><p class="hint">Подключаем игровую станцию.</p></div>`;
@@ -63,22 +66,39 @@ function render(){app.innerHTML=snapshot?roomView(snapshot):room?(publicSnapshot
 async function loadPublic(){
  if(!room||token)return;
  try{publicSnapshot=await fetchJson('/api/room?room='+encodeURIComponent(room));render();}
- catch(err){publicSnapshot=null;app.innerHTML=`${header()}<div class="glass panel"><h2>🔎 Комната не найдена</h2><p class="hint">${esc(err.message)}</p><button class="btn primary" data-action="go-home">На главную</button></div>`;}
+ catch(err){publicSnapshot=null;app.innerHTML=`${header()}<div class="glass panel"><h2>🔎 Пока не удаётся войти</h2><p class="hint">${esc(err.message)}</p><p class="hint small">Если сервер Render перезапустился, ведущему нужно снова открыть свою ссылку. Комната восстановится с тем же кодом, и вы сможете занять роль заново. Эта страница повторит подключение автоматически.</p><button class="btn outline" data-action="reload-room">🔄 Попробовать снова</button><button class="btn primary" data-action="go-home">На главную</button></div>`;}
 }
 async function connect(){
- if(stream)stream.close();connection='на связи';
+ if(stream)stream.close();clearTimeout(reconnectTimer);reconnectTimer=null;connection='на связи';
  try{snapshot=await fetchJson(`/api/state?room=${encodeURIComponent(room)}&token=${encodeURIComponent(token)}`);render();}
- catch(err){dismissSession();notification(err.message);return loadPublic();}
+ catch(err){
+   // In-memory rooms disappear if the free Render instance restarts.
+   if(isHostSession(room,token)&&/комната закрыта|комната не найдена/i.test(err.message)){
+     try{
+       const out=await post('/api/recover',{room,token});
+       snapshot=await fetchJson(`/api/state?room=${encodeURIComponent(room)}&token=${encodeURIComponent(token)}`);
+       render();
+       if(out.recovered)notification('Комната восстановлена! Попросите учеников снова выбрать роли.');
+     }catch(recoveryErr){dismissSession();notification(recoveryErr.message);return loadPublic();}
+   }else{dismissSession();notification(err.message);return loadPublic();}
+ }
  stream=new EventSource(`/api/stream?room=${encodeURIComponent(room)}&token=${encodeURIComponent(token)}`);
  stream.addEventListener('state',e=>{try{snapshot=JSON.parse(e.data);connection='на связи';render();}catch{}});
  stream.addEventListener('removed',()=>{dismissSession();notification('Ведущий освободил твою роль.');loadPublic();});
- stream.onerror=()=>{connection='переподключение…';const badge=document.getElementById('connection');if(badge)badge.textContent=connection;};
+ stream.onerror=()=>{
+   connection='переподключение…';const badge=document.getElementById('connection');if(badge)badge.textContent=connection;
+   if(!reconnectTimer)reconnectTimer=setTimeout(()=>{reconnectTimer=null;if(room&&token)connect();},6500);
+ };
 }
 async function action(a,data={}){
  if(loading)return;loading=true;
  try{
   if(a==='create'){
-    const out=await post('/api/create');roomURL(out.room);token=out.token;persist(room,token);await connect();notification('Комната готова! Отправьте ссылку детям.');
+    const out=await post('/api/create');roomURL(out.room);token=out.token;persist(room,token);rememberHost(room,token);await connect();notification('Комната готова! Отправьте ссылку детям.');
+  }else if(a==='enter-room'){
+    const code=(document.getElementById('room-code')?.value||'').trim().toUpperCase();
+    if(!/^[A-Z0-9]{5}$/.test(code))throw new Error('Введите код комнаты из пяти символов.');
+    roomURL(code);selectedRole='';publicSnapshot=null;await loadPublic();
   }else if(a==='select-role'){
     selectedRole=data.role;render();
   }else if(a==='join'){
@@ -105,5 +125,5 @@ app.addEventListener('click',event=>{const node=event.target.closest('[data-acti
 setInterval(()=>{
  if(snapshot?.stage==='finale'&&snapshot.finale?.active){const el=document.querySelector('[data-countdown]');if(el)el.textContent=String(Math.max(0,Math.ceil((snapshot.finale.endsAt-Date.now())/1000)));}
 },200);
-setInterval(()=>{if(room&&!token&&publicSnapshot?.stage==='lobby')loadPublic();},4500);
-if(room){token=sessionStorage.getItem(keyFor(room))||'';if(token)connect();else loadPublic();}else render();
+setInterval(()=>{if(room&&!token&&(!publicSnapshot||publicSnapshot.stage==='lobby'))loadPublic();},6000);
+if(room){token=sessionStorage.getItem(keyFor(room))||localStorage.getItem(hostKeyFor(room))||'';if(token)connect();else loadPublic();}else render();
