@@ -236,6 +236,25 @@ async function api(req,res,url){
   if(url.pathname==='/api/create'&&req.method==='POST'){
     const room=newRoom();return json(res,200,{room:room.code,token:room.hostToken});
   }
+  // Render Free can restart an instance, which clears in-memory rooms.
+  // Allow the original teacher browser to restore the same invitation code.
+  if(url.pathname==='/api/recover'&&req.method==='POST'){
+    const body=await readBody(req);
+    const code=clean(body.room).toUpperCase(), token=clean(body.token);
+    if(!/^[A-HJ-NP-Z2-9]{5}$/.test(code)||!/^[a-f0-9]{40}$/.test(token))
+      throw new Error('Некорректный код комнаты или ключ ведущего.');
+    let room=rooms.get(code);
+    if(room){
+      if(room.hostToken!==token)throw new Error('Комната уже существует. Обновите страницу.');
+      return json(res,200,{room:code,token,recovered:false});
+    }
+    if(rooms.size>=MAX_ROOMS)throw new Error('Слишком много комнат. Попробуйте позже.');
+    room={code,hostToken:token,players:[],streams:new Set(),stage:'lobby',done:false,
+      notice:'Комната восстановлена после перезапуска сервера. Пригласите участников снова.',
+      updatedAt:Date.now(),signal:null,cargo:[],trainResult:null,maze:null,finale:null};
+    rooms.set(code,room);
+    return json(res,200,{room:code,token,recovered:true});
+  }
   if(url.pathname==='/api/room'&&req.method==='GET'){
     const room=rooms.get(clean(url.searchParams.get('room')).toUpperCase());return room?json(res,200,publicRoom(room)):json(res,404,{error:'Комната не найдена или закрылась. Попросите ведущего создать новую.'});
   }
