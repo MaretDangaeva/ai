@@ -4,6 +4,7 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const boardGame = require('./board-server.js');
 const PORT = Number(process.env.PORT || 3000);
 const STATIC = path.join(__dirname, 'public');
 const MAX_ROOMS = 80;
@@ -232,6 +233,7 @@ function readBody(req){return new Promise((resolve,reject)=>{
   req.on('error',reject);
 });}
 async function api(req,res,url){
+  if(url.pathname.startsWith('/api/board/'))return boardGame.api(req,res,url);
   if(url.pathname==='/api/health')return json(res,200,{status:'ok',rooms:rooms.size});
   if(url.pathname==='/api/create'&&req.method==='POST'){
     const room=newRoom();return json(res,200,{room:room.code,token:room.hostToken});
@@ -293,7 +295,7 @@ async function api(req,res,url){
   return json(res,404,{error:'Не найдено.'});
 }
 function serve(req,res,url){
-  const name=url.pathname==='/'?'/index.html':url.pathname;
+  const name=url.pathname==='/'?'/index.html':url.pathname==='/board'?'/board.html':url.pathname;
   let filename;
   try{filename=path.resolve(STATIC,'.'+decodeURIComponent(name));}catch{return json(res,400,{error:'Некорректный путь.'});}
   if(filename!==STATIC&&!filename.startsWith(STATIC+path.sep))return json(res,403,{error:'Нет доступа.'});
