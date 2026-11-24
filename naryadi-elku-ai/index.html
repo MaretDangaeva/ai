@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101b3a">
+  <meta name="description" content="Новогодняя интерактивная игра по искусственному интеллекту для 1–4 классов. Отвечай на вопросы и наряжай ёлку!">
+  <title>Наряди ёлку! — новогодняя игра по ИИ</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="questions.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="snow" aria-hidden="true"></div>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">✦</div>
+        <div><div class="brand-name">Ёлка знаний</div><div class="brand-sub">НОВОГОДНЯЯ ИГРА ПРО ИИ</div></div>
+      </div>
+      <div class="top-actions">
+        <button class="icon-button" id="soundButton" type="button" aria-pressed="false" aria-label="Включить звуки" title="Включить звуки">
+          <svg class="speaker-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15 9a5 5 0 0 1 0 6M18 6a9 9 0 0 1 0 12"/></svg>
+          <svg class="speaker-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="m16 9 5 6m0-6-5 6"/></svg>
+        </button>
+        <button class="reset-button" id="homeButton" type="button"><span aria-hidden="true">↺</span> <span>Новая игра</span></button>
+      </div>
+    </header>
+
+    <main class="game-grid">
+      <section class="tree-card" aria-label="Игровая ёлка">
+        <div class="tree-topline"><span class="eyebrow"><span class="green-dot"></span> Мастерская чудес</span><span class="tree-score" id="treeScore">0 из 6 игрушек</span></div>
+        <div class="tree-illustration">
+          <div class="tree-glow" aria-hidden="true"></div>
+          <svg id="treeSvg" class="tree-svg" viewBox="0 0 480 550" role="group" aria-label="Новогодняя ёлка, которую можно украсить заработанными игрушками">
+            <defs>
+              <linearGradient id="treeA" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#39ba91"/><stop offset=".58" stop-color="#137e6a"/><stop offset="1" stop-color="#07534e"/></linearGradient>
+              <linearGradient id="treeB" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#25a67f"/><stop offset=".55" stop-color="#08685d"/><stop offset="1" stop-color="#06463f"/></linearGradient>
+              <linearGradient id="treeC" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#21a47d"/><stop offset=".6" stop-color="#095d53"/><stop offset="1" stop-color="#06423e"/></linearGradient>
+              <linearGradient id="trunk" x1="0" x2="1"><stop offset="0" stop-color="#8d4e3e"/><stop offset="1" stop-color="#b77b52"/></linearGradient>
+              <radialGradient id="starG"><stop offset="0" stop-color="#fff7ca"/><stop offset=".55" stop-color="#ffd774"/><stop offset="1" stop-color="#f4aa46"/></radialGradient>
+              <radialGradient id="redBall" cx="35%" cy="30%"><stop offset="0" stop-color="#ffc8c4"/><stop offset=".24" stop-color="#ff7377"/><stop offset="1" stop-color="#c82552"/></radialGradient>
+              <radialGradient id="purpleBall" cx="35%" cy="28%"><stop offset="0" stop-color="#eee3ff"/><stop offset=".22" stop-color="#bca1ff"/><stop offset="1" stop-color="#7150c5"/></radialGradient>
+              <filter id="treeShadow" x="-40%" y="-40%" width="180%" height="200%"><feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#00111b" flood-opacity=".38"/></filter>
+              <filter id="starGlow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="8"/></filter>
+            </defs>
+            <g class="background-sparkles" fill="#dbece9" opacity=".68">
+              <circle cx="66" cy="116" r="2.2"/><circle cx="409" cy="124" r="2"/><circle cx="100" cy="231" r="1.5"/><circle cx="385" cy="247" r="2.2"/><circle cx="61" cy="342" r="1.7"/><circle cx="417" cy="356" r="1.8"/><circle cx="87" cy="420" r="2"/><circle cx="407" cy="441" r="1.5"/>
+              <path d="M92 157v13m-6.5-6.5h13M383 189v15m-7.5-7.5h15M396 306v12m-6-6h12M76 296v12m-6-6h12" stroke="#b7dedd" stroke-width="1.7" stroke-linecap="round"/>
+            </g>
+            <ellipse cx="240" cy="500" rx="179" ry="20" fill="#b2d7db" opacity=".16"/>
+            <path d="M80 490 Q150 480 196 489 T324 487 T410 490 L419 525 L63 525Z" fill="#c2e4e5" opacity=".34"/>
+            <g filter="url(#treeShadow)">
+              <rect x="220" y="409" width="40" height="97" rx="9" fill="url(#trunk)"/>
+              <path d="M240 205 C213 250 152 329 101 425 Q111 451 147 435 Q165 457 193 440 Q218 462 240 442 Q266 463 290 439 Q320 459 342 437 Q371 448 382 423 C316 326 269 253 240 205Z" fill="url(#treeC)"/>
+              <path d="M240 142 C213 186 170 280 137 338 Q149 356 171 343 Q191 361 211 346 Q240 361 259 348 Q285 363 309 344 Q331 358 344 337 C297 259 257 176 240 142Z" fill="url(#treeB)"/>
+              <path d="M240 87 C211 138 186 206 166 264 Q183 279 200 265 Q220 282 240 267 Q262 281 280 264 Q298 278 316 263 C290 200 264 130 240 87Z" fill="url(#treeA)"/>
+              <path d="M239 105 Q214 169 190 240 M237 176 Q205 251 156 325 M241 252 Q202 346 133 417" stroke="#86e8bd" stroke-width="3" stroke-linecap="round" opacity=".17" fill="none"/>
+              <path d="M264 147 Q281 202 304 252 M262 254 Q311 341 351 410" stroke="#001c29" stroke-width="4" stroke-linecap="round" opacity=".12" fill="none"/>
+            </g>
+            <g fill="none" stroke="#f9c975" stroke-width="3.5" opacity=".80" stroke-linecap="round">
+              <path d="M194 226 Q242 254 283 225"/>
+              <path d="M166 316 Q240 355 313 315"/>
+              <path d="M132 398 Q243 448 350 398"/>
+            </g>
+            <g fill="#fff0ad" opacity=".95"><circle cx="193" cy="225" r="3.8"/><circle cx="233" cy="244" r="3.4"/><circle cx="282" cy="227" r="3.9"/><circle cx="167" cy="316" r="3.4"/><circle cx="237" cy="337" r="3.5"/><circle cx="313" cy="316" r="3.4"/><circle cx="132" cy="398" r="3.4"/><circle cx="242" cy="425" r="3.4"/><circle cx="350" cy="398" r="3.4"/></g>
+            <g id="treeSlots"></g>
+            <g id="treeOrnaments"></g>
+            <g id="treeStar" class="tree-star">
+              <path class="star-halo" d="m240 52 9 25 26 1-21 16 7 25-21-15-21 15 7-25-21-16 26-1Z" fill="#ffe29e" opacity=".7" filter="url(#starGlow)"/>
+              <path d="m240 51 9 25 26 1-21 16 7 25-21-15-21 15 7-25-21-16 26-1Z" fill="url(#starG)" stroke="#fff0b0" stroke-width="2" stroke-linejoin="round"/>
+              <path d="m240 64 5 16 16 1-13 10 4 15-12-9-12 9 4-15-13-10 16-1Z" fill="#fff4c3" opacity=".24"/>
+            </g>
+            <g class="gift" transform="translate(96 469)"><rect y="12" width="65" height="43" rx="6" fill="#db5b79"/><path d="M27 12h12v43H27z" fill="#ffe1a5"/><rect x="-3" y="4" width="71" height="15" rx="4" fill="#ef8299"/><path d="M33 5c-23-3-20-18-9-16 9 1 9 16 9 16Zm0 0c24-3 20-18 9-16-9 1-9 16-9 16Z" fill="none" stroke="#ffe1a5" stroke-width="5"/></g>
+            <g class="gift" transform="translate(320 471)"><rect y="10" width="65" height="42" rx="5" fill="#78acd1"/><path d="M25 10h14v42H25z" fill="#e9f3ca"/><rect x="-4" y="2" width="73" height="15" rx="4" fill="#9ad0ef"/><path d="M32 5c-23-3-19-16-8-15 7 1 8 15 8 15Zm0 0c22-3 20-17 9-15-9 1-9 15-9 15Z" stroke="#e9f3ca" stroke-width="4" fill="none"/></g>
+          </svg>
+        </div>
+        <div class="tree-help" id="treeHelp" aria-live="polite"><span class="help-symbol" aria-hidden="true">✦</span><span>За каждый правильный ответ — игрушка на ёлку!</span></div>
+      </section>
+
+      <section class="content-card" aria-label="Вопросы игры">
+        <div class="screen" id="introScreen">
+          <div class="intro-icon" aria-hidden="true">🎁</div>
+          <span class="content-kicker">НОВОГОДНИЙ КВЕСТ</span>
+          <h1>Наряди ёлку<span class="bang">!</span></h1>
+          <p class="intro-lead">Проверь, что ты знаешь об искусственном интеллекте, и создай самую красивую новогоднюю ёлку.</p>
+          <div class="choose-block">
+            <div class="choose-label"><span>01</span> Выбери класс</div>
+            <div class="choice-row" id="gradeChoice" role="group" aria-label="Возрастная группа">
+              <button class="setting-choice selected" type="button" data-grade="junior" aria-pressed="true"><span class="choice-emoji">🐣</span><span><strong>1–2 класс</strong><small>Простые вопросы</small></span></button>
+              <button class="setting-choice" type="button" data-grade="senior" aria-pressed="false"><span class="choice-emoji">🚀</span><span><strong>3–4 класс</strong><small>Чуть сложнее</small></span></button>
+            </div>
+          </div>
+          <div class="choose-block">
+            <div class="choose-label"><span>02</span> Сколько заданий?</div>
+            <div class="choice-row" id="lengthChoice" role="group" aria-label="Продолжительность игры">
+              <button class="setting-choice selected" type="button" data-length="6" aria-pressed="true"><span class="choice-emoji">⚡</span><span><strong>6 заданий</strong><small>5–8 минут</small></span></button>
+              <button class="setting-choice" type="button" data-length="12" aria-pressed="false"><span class="choice-emoji">🌟</span><span><strong>12 заданий</strong><small>10–15 минут</small></span></button>
+            </div>
+          </div>
+          <button class="primary-button start-button" id="startButton" type="button">Начать игру <span aria-hidden="true">→</span></button>
+          <p class="footnote">Можно играть всем классом с одного экрана. Интернет не нужен после загрузки страницы.</p>
+        </div>
+
+        <div class="screen" id="quizScreen" hidden>
+          <div class="quiz-head"><span class="round-pill" id="roundPill">ВОПРОС 1 / 6</span><span class="score-label" id="progressCaption">0 игрушек готово</span></div>
+          <div class="progress-track" role="progressbar" aria-label="Прогресс украшения ёлки" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progressTrack"><div id="progressFill"></div></div>
+          <div class="topic-tag" id="topicTag">🤖 Знакомство с ИИ</div>
+          <h2 class="question-title" id="questionTitle">Вопрос</h2>
+          <p class="question-sub" id="questionSubtitle">Выбери один ответ.</p>
+          <div class="answers" id="answers" role="group" aria-label="Варианты ответа"></div>
+          <div class="feedback" id="feedback" role="status" aria-live="polite" hidden></div>
+          <div id="decoratePanel" class="decorate-panel" hidden>
+            <div class="section-divider"></div>
+            <h3>Ура, игрушка твоя! <span aria-hidden="true">✨</span></h3>
+            <p>Выбери украшение, а затем нажми на светящийся кружок на ёлке.</p>
+            <div class="ornament-palette" id="ornamentPalette" role="group" aria-label="Выбор украшения">
+              <button type="button" class="ornament-choice active" data-ornament="red" aria-pressed="true" aria-label="Красный шар" title="Красный шар"><span class="ornament-dot red"></span></button>
+              <button type="button" class="ornament-choice" data-ornament="gold" aria-pressed="false" aria-label="Золотая звезда" title="Золотая звезда"><span class="ornament-gold">★</span></button>
+              <button type="button" class="ornament-choice" data-ornament="snow" aria-pressed="false" aria-label="Снежинка" title="Снежинка"><span class="ornament-snow">❄</span></button>
+              <button type="button" class="ornament-choice" data-ornament="purple" aria-pressed="false" aria-label="Фиолетовый шар" title="Фиолетовый шар"><span class="ornament-dot purple"></span></button>
+            </div>
+            <button type="button" class="secondary-button" id="autoPlaceButton">Повесить автоматически <span aria-hidden="true">↗</span></button>
+          </div>
+          <div class="next-panel" id="nextPanel" hidden>
+            <p class="placed-message">✨ Игрушка на месте! Ёлка становится красивее.</p>
+            <button type="button" class="primary-button" id="nextButton">Следующий вопрос <span aria-hidden="true">→</span></button>
+          </div>
+          <p class="keyboard-tip">Подсказка: варианты ответа можно выбирать клавишами 1, 2, 3.</p>
+        </div>
+
+        <div class="screen finish-screen" id="finishScreen" hidden>
+          <div class="finish-crown" aria-hidden="true">🏆</div>
+          <span class="content-kicker">МИССИЯ ВЫПОЛНЕНА</span>
+          <h2 class="finish-title">Ёлка готова! <span aria-hidden="true">🎄</span></h2>
+          <p class="finish-lead">Ты справился со всеми заданиями и украсил новогоднюю ёлку. Отличная работа!</p>
+          <div class="finish-stats"><span class="stat-icon" aria-hidden="true">✨</span><span><strong id="finalCount">6 игрушек</strong><small>украшают твою ёлку</small></span></div>
+          <div class="reflection-card"><span class="reflection-label">МИНИ-РЕФЛЕКСИЯ</span><p>Какое правило работы с ИИ ты запомнишь и расскажешь другу?</p></div>
+          <button class="primary-button" id="playAgainButton" type="button">Сыграть ещё раз <span aria-hidden="true">↺</span></button>
+          <button class="text-button" id="changeModeButton" type="button">Выбрать другой режим</button>
+        </div>
+      </section>
+    </main>
+    <footer class="footer"><span>Создано для уроков об искусственном интеллекте · 1–4 классы</span><span>Учимся, играя <span aria-hidden="true">✳</span></span></footer>
+  </div>
+  <div id="confetti" class="confetti" aria-hidden="true"></div>
+</body>
+</html>
